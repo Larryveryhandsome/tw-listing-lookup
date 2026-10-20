@@ -10,6 +10,7 @@
 
   let records = [];
   let dataLabel = '';
+  let ready = Promise.resolve(); // csvUrl 模式：資料讀完才能查（網址帶 ?id= 時尤其需要）
 
   function setStatus(msg, err) {
     $('status').textContent = msg;
@@ -90,6 +91,7 @@
   async function query(q) {
     q = q.trim();
     if (!q) { $('results').innerHTML = ''; setStatus(''); return; }
+    await ready;
     if (SRC.type === 'api') {
       setStatus('查詢中…');
       try {
@@ -104,6 +106,7 @@
       }
       return;
     }
+    if (!records.length && SRC.type === 'csvUrl') return; // 讀取失敗的訊息已顯示，不要蓋掉
     if (!records.length) { setStatus('還沒有資料，請先在下方「資料來源」選擇 CSV 檔。', true); $('dataBox').open = true; return; }
     const r = L.lookup(records, CFG.idField, q, { searchFields: CFG.searchFields });
     show(r.results, r.mode === 'id' ? `${CFG.idField} ${q}` : `關鍵字「${q}」：找到 ${r.results.length} 筆${r.results.length >= 50 ? '（只顯示前 50 筆）' : ''}`);
@@ -118,7 +121,7 @@
     $('dataBox').hidden = true;
   } else {
     $('qLabel').textContent = `輸入${CFG.idField}，或關鍵字（案名、地址、承辦人…）`;
-    if (SRC.type === 'csvUrl') initCsvUrl(); else initCSV();
+    if (SRC.type === 'csvUrl') ready = initCsvUrl(); else initCSV();
   }
   $('form').addEventListener('submit', e => { e.preventDefault(); query($('q').value); });
 
