@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>編號查詢</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <h1 id="title">編號查詢</h1>
+
+    <form id="form" class="search" autocomplete="off">
+      <label for="q" id="qLabel">輸入編號或關鍵字</label>
+      <div class="bar">
+        <input id="q" type="search" inputmode="search" placeholder="例如：1，或 透天 業務A" autofocus>
+        <button type="submit" class="primary">查詢</button>
+      </div>
+    </form>
+
+    <div id="status" class="status"></div>
+    <div id="results"></div>
+
+    <details id="dataBox" class="data">
+      <summary>資料來源</summary>
+      <div id="dataCsv">
+        <p id="dataInfo"></p>
+        <div class="row">
+          <label class="file">選擇 CSV 檔<input type="file" id="file" accept=".csv,text/csv"></label>
+          <button id="btnSample" type="button">使用示範資料</button>
+          <button id="btnClear" type="button">清除這台電腦存的資料</button>
+        </div>
+        <p class="hint">CSV 第一列要是欄位名稱，其中一欄叫「<span id="idFieldName"></span>」。Excel 請用「另存新檔 → CSV UTF-8（逗號分隔）」。範本：<code>data/listings.example.csv</code></p>
+      </div>
+    </details>
+  </main>
+
+  <footer><small>tw-listing-lookup · Apache-2.0</small></footer>
+
+  <script src="config.js"></script>
+  <script src="data/sample.js"></script>
+  <script src="js/lookup.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
