@@ -70,3 +70,22 @@ test('API 回應轉換：物件、陣列、{data:[]}、巢狀欄位、空結果'
   assert.deepEqual(L.mapApiResponse({}, map), []);
   assert.deepEqual(L.mapApiResponse({ a: 1, b: null }), [{ a: '1', b: '' }]);
 });
+
+test('sensitiveHeaders：找出個資欄位，承辦人電話不算', () => {
+  const bad = L.sensitiveHeaders(['售版編號', '案名', '屋主姓名', '屋主電話', '客戶手機', '承辦人電話', '業務手機', 'Email', '身分證字號', '總價(萬)']);
+  assert.deepEqual(bad, ['屋主姓名', '屋主電話', '客戶手機', 'Email', '身分證字號']);
+  assert.deepEqual(L.sensitiveHeaders(Object.keys(L.loadCSV(require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'data', 'listings.example.csv'), 'utf8'))[0])), []);
+});
+
+test('CSV 解析：引號、欄位內換行、BOM、CRLF、上萬列效能', () => {
+  const rows = L.parseCSV('\ufeffa,b\r\n"x,1","line1\nline2"\r\n"q""t",z');
+  assert.deepEqual(rows, [['a', 'b'], ['x,1', 'line1\nline2'], ['q"t', 'z']]);
+  const big = ['售版編號,案名,地址'];
+  for (let i = 1; i <= 30000; i++) big.push(`${i},案名${i},示範市路${i}號`);
+  const t = Date.now();
+  const recs = L.loadCSV(big.join('\n'));
+  assert.equal(recs.length, 30000);
+  assert.equal(L.findById(recs, '售版編號', '29999')[0].案名, '案名29999');
+  assert.ok(L.search(recs, '案名2999', ['案名']).length > 0);
+  assert.ok(Date.now() - t < 3000, '3 萬列要在 3 秒內');
+});

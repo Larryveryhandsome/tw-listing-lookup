@@ -67,7 +67,17 @@
     try {
       const res = await fetch(SRC.csvUrl, { cache: 'no-store' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      useCSV(await res.text(), 'CSV 網址', false);
+      const ok = useCSV(await res.text(), 'CSV 網址', false);
+      // 發布到網路的 CSV 任何人都能下載整份（showFields 只是「畫面上」少顯示，擋不住下載）
+      const bad = ok && records.length ? L.sensitiveHeaders(Object.keys(records[0])) : [];
+      if (bad.length) {
+        const w = document.createElement('div');
+        w.id = 'piiWarn';
+        w.className = 'status err';
+        w.textContent = `⚠️ 個資警告：你發布的 CSV 含有「${bad.join('、')}」欄位。Google 試算表「發布到網路」＝任何人都能下載整份資料。` +
+          '請改成只含對外也無妨的欄位（編號、案名、地址到路段、總價、承辦人），屋主姓名與電話請另存一份不要發布。';
+        $('status').parentNode.insertBefore(w, $('status'));
+      }
     } catch (e) {
       setStatus('資料讀取失敗：' + e.message + '。請檢查 config.js 的 csvUrl。', true);
     }
@@ -106,7 +116,7 @@
       }
       return;
     }
-    if (!records.length && SRC.type === 'csvUrl') return; // 讀取失敗的訊息已顯示，不要蓋掉
+    if (!records.length && SRC.type === 'csvUrl') { if (!$('status').textContent) setStatus('資料是空的，請檢查 CSV 網址。', true); return; }
     if (!records.length) { setStatus('還沒有資料，請先在下方「資料來源」選擇 CSV 檔。', true); $('dataBox').open = true; return; }
     const r = L.lookup(records, CFG.idField, q, { searchFields: CFG.searchFields });
     show(r.results, r.mode === 'id' ? `${CFG.idField} ${q}` : `關鍵字「${q}」：找到 ${r.results.length} 筆${r.results.length >= 50 ? '（只顯示前 50 筆）' : ''}`);

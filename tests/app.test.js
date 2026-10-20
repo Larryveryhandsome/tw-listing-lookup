@@ -16,9 +16,10 @@ function boot({ search, fetchImpl, type = 'csvUrl' }) {
     listeners: {}, addEventListener(n, f) { this.listeners[n] = f; }, focus() {} });
   const win = { Lookup: L };
   ['q', 'form'].forEach(el);
+  el('status').parentNode = { inserted: [], insertBefore(n) { this.inserted.push(n); } };
   const ctx = {
     window: win, Lookup: L, URLSearchParams, setTimeout, console, Promise,
-    document: { getElementById: el, title: '' },
+    document: { getElementById: el, title: '', createElement: () => ({}) },
     location: { search },
     localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
     fetch: fetchImpl,
@@ -59,4 +60,21 @@ test('csv 模式：?id= 直接用內建示範資料查', async () => {
   const els = boot({ type: 'csv', search: '?id=3', fetchImpl: async () => { throw new Error('不該呼叫 fetch'); } });
   await delay(50);
   assert.match(els.results.innerHTML, /示範透天甲/);
+});
+
+test('csvUrl 模式：CSV 含屋主姓名／電話欄位時跳出個資警告', async () => {
+  const bad = '售版編號,案名,屋主姓名,屋主電話,承辦人電話\n1,甲,王小明,0912345678,02-1234\n';
+  const els = boot({ search: '', fetchImpl: async () => ({ ok: true, text: async () => bad }) });
+  await delay(100);
+  const w = els.status.parentNode.inserted[0];
+  assert.ok(w, '要有警告區塊');
+  assert.match(w.textContent, /個資警告/);
+  assert.match(w.textContent, /屋主姓名、屋主電話/);
+  assert.doesNotMatch(w.textContent, /承辦人電話/);
+});
+
+test('csvUrl 模式：範本 CSV（只有公開欄位）不會跳警告', async () => {
+  const els = boot({ search: '', fetchImpl: async () => ({ ok: true, text: async () => csv }) });
+  await delay(100);
+  assert.equal(els.status.parentNode.inserted.length, 0);
 });

@@ -76,6 +76,22 @@
     return { mode: 'keyword', results: search(records, query, opts && opts.searchFields).slice(0, limit) };
   }
 
+  /**
+   * 找出「看起來是個資」的欄位名稱（屋主姓名、客戶電話、身分證…）。
+   * 承辦人／業務／店長／公司這類「對外聯絡用」的電話不算。
+   * 用在「CSV 網址模式」：發布到網路的 CSV 任何人都下載得到，欄位多半不該公開。
+   */
+  const PII_ALWAYS = /屋主|所有權人|所有人|賣方|買方|委託人|客戶|業主|房東|房客|租客|姓名|身分證|身份證|生日|出生|戶籍|統編|統一編號|e-?mail|信箱|私人|個資|owner|customer|client|idcard|birth/i;
+  const PII_PHONE = /電話|手機|行動|聯絡|phone|mobile|tel/i;
+  const PUBLIC_CONTACT = /承辦|業務|經紀|店長|門市|公司|店|分店|專員|agent|office|store/i;
+  function sensitiveHeaders(headers) {
+    return (headers || []).map(h => String(h || '').trim()).filter(h => {
+      if (!h) return false;
+      if (PII_ALWAYS.test(h)) return true;
+      return PII_PHONE.test(h) && !PUBLIC_CONTACT.test(h);
+    });
+  }
+
   /** API 網址：把 {id} 換成編號（會自動編碼） */
   function buildApiUrl(template, id) {
     if (!/\{id\}/.test(template || '')) throw new Error('API 網址裡要有 {id}');
@@ -105,5 +121,5 @@
     });
   }
 
-  return { parseCSV, toRecords, loadCSV, normalizeId, findById, search, lookup, buildApiUrl, pick, mapApiResponse };
+  return { parseCSV, toRecords, loadCSV, sensitiveHeaders, normalizeId, findById, search, lookup, buildApiUrl, pick, mapApiResponse };
 });
