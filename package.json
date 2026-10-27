@@ -1,0 +1,10 @@
+{
+  "name": "tw-listing-lookup",
+  "version": "1.0.0",
+  "description": "輸入售版編號（或任何編號），馬上查到地址、承辦人等資料。純網頁，資料可放 CSV、Google 試算表或自己的 API",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}
